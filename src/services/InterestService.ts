@@ -19,7 +19,7 @@ export function displayInterestRules() {
   console.log('| Date     | Rule Id | Rate (%) |');
 
   (interestRules || []).forEach(rule => {
-    console.log(`| ${rule.date} | ${rule.ruleId.padStart(6)} | ${rule.rate.toFixed(2).padStart(8)} |`);
+    console.log(`| ${rule.date} | ${rule.ruleId.padEnd(7)} | ${rule.rate.toFixed(2).padStart(8)} |`);
   });
 
 }
