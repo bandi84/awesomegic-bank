@@ -25,36 +25,34 @@ export function printStatement(accountId: string, ym: string): void {
   const year = parseInt(yearStr);
   const month = parseInt(monthStr);
   const lastDay = `${ym}${getLastDayOfMonth(year, month).getDate()}`;
-  const interest = calculateInterest(txns, ym, openingBalance);
+  const interest = calculateInterest(accountId, txns, ym, openingBalance);
   if (interest > 0) {
     balance += interest;
     console.log(`| ${lastDay} |             | I    | ${interest.toFixed(2).padStart(6)} | ${balance.toFixed(2).padStart(7)} |`);
   }
 }
 
-function addStartEndMonthTransactions(transactions: Transaction[], startDate: Date, endDate: Date) {
+function addStartEndMonthTransactions(accountId: string,transactions: Transaction[], startDate: Date, endDate: Date, openingBalance: number) {
   let monthTransactions: Transaction[] = [...transactions];
   if (transactions.length > 0) {
-    if (parseDate(transactions[0].date).getTime() !== startDate.getTime()) {
-
-    }
-
     if (parseDate(transactions[transactions.length - 1].date).getTime() !== endDate.getTime()) {
       monthTransactions.push({ ...transactions[transactions.length - 1], date: formatDate(endDate) });
     }
+  } else if(openingBalance > 0){
+    monthTransactions.push({ accountId: accountId, id:`${formatDate(endDate)}-01`, date: formatDate(endDate), type: 'D', balance: openingBalance, amount: 0 });
   }
 
   return monthTransactions;
 }
 
-function calculateInterest(transactions: Transaction[], yearMonth: string, openingBalance: number): number {
+function calculateInterest(accountId: string, transactions: Transaction[], yearMonth: string, openingBalance: number): number {
   const [yearStr, monthStr] = [yearMonth.slice(0, 4), yearMonth.slice(4)];
   const year = parseInt(yearStr);
   const month = parseInt(monthStr);
   const firstDay = new Date(year, month - 1, 1);
   const lastDay = getLastDayOfMonth(year, month);
 
-  const accountTxns = addStartEndMonthTransactions([...deduplicateTransactionsByDate(transactions)], firstDay, lastDay);
+  const accountTxns = addStartEndMonthTransactions(accountId, [...deduplicateTransactionsByDate(transactions)], firstDay, lastDay, openingBalance);
 
   const txnInterestPeriods: { startDate: Date; endDate: Date; balanceAmt: number; rate: number }[] = [];
   let startTransactionDate = firstDay;
@@ -101,12 +99,12 @@ function calculateInterest(transactions: Transaction[], yearMonth: string, openi
   }
 
 
-  if (startTransactionDate < lastDay) {
+  /*if (startTransactionDate < lastDay) {
     txnInterestPeriods.push({
       startDate: startTransactionDate,
       endDate: lastDay, balanceAmt: balanceAmt || 0, rate: getRuleForDate(interestRules, lastDay)?.rate || 0
     });
-  }
+  }*/
 
   const totalInterest = txnInterestPeriods.reduce((sum, p) => {
     const days = daysBetween(p.startDate, p.endDate);
