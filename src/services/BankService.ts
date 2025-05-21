@@ -25,7 +25,6 @@ export function addTransaction(date: string, accountId: string, type: string, am
   const txn: Transaction = {
     id: generateTxnId(date, count),
     date,
-    accountId,
     type: upperType,
     amount
   };

@@ -2,14 +2,14 @@ import { accounts } from '../data/BankData';
 import { interestRules } from '../data/BankData';
 import { InterestRule } from '../models/InterestRule';
 import { Transaction } from '../models/Transaction';
-import { parseDate, getLastDayOfMonth, daysBetween, formatDate } from '../utils/dateUtils';
+import { parseDate, getLastDayOfMonth } from '../utils/dateUtils';
 
 export function printStatement(accountId: string, ym: string): void {
   const account = accounts.get(accountId);
   if (!account) return console.log(`Account ${accountId} not found.`);
 
-  const txns = [...account.transactions.filter(txn => txn.date.startsWith(ym))];
-  const openingBalance = calculateOpeningBalance(account.transactions, ym);
+  const txns = [...account.transactions.filter(txn => txn.date.startsWith(ym)).sort((a, b) => a.date.localeCompare(b.date))];
+  const openingBalance = calculateOpeningBalance(account.transactions, `${ym}01`);
 
   let balance = openingBalance;
 
@@ -17,121 +17,49 @@ export function printStatement(accountId: string, ym: string): void {
   console.log(`| Date     | Txn Id      | Type | Amount | Balance |`);
   for (const txn of txns) {
     balance += txn.type === 'D' || txn.type === 'I' ? txn.amount : -txn.amount;
-    txn.balance = balance;
     console.log(`| ${txn.date} | ${txn.id.padEnd(11)} | ${txn.type}    | ${txn.amount.toFixed(2).padStart(6)} | ${balance.toFixed(2).padStart(7)} |`);
   }
 
-  const [yearStr, monthStr] = [ym.slice(0, 4), ym.slice(4)];
-  const year = parseInt(yearStr);
-  const month = parseInt(monthStr);
-  const lastDay = `${ym}${getLastDayOfMonth(year, month).getDate()}`;
-  const interest = calculateInterest(accountId, txns, ym, openingBalance);
+  const lastDay = `${ym}${getLastDayOfMonth(ym).getDate()}`;
+  const interest = calculateInterest(txns, ym, openingBalance);
   if (interest > 0) {
     balance += interest;
     console.log(`| ${lastDay} |             | I    | ${interest.toFixed(2).padStart(6)} | ${balance.toFixed(2).padStart(7)} |`);
   }
 }
 
-function addStartEndMonthTransactions(accountId: string,transactions: Transaction[], startDate: Date, endDate: Date, openingBalance: number) {
-  let monthTransactions: Transaction[] = [...transactions];
-  if (transactions.length > 0) {
-    if (parseDate(transactions[transactions.length - 1].date).getTime() !== endDate.getTime()) {
-      monthTransactions.push({ ...transactions[transactions.length - 1], date: formatDate(endDate) });
-    }
-  } else if(openingBalance > 0){
-    monthTransactions.push({ accountId: accountId, id:`${formatDate(endDate)}-01`, date: formatDate(endDate), type: 'D', balance: openingBalance, amount: 0 });
-  }
+function calculateInterest(transactions: Transaction[], yearMonth: string, openingBalance: number): number {
+  const lastDay = getLastDayOfMonth(yearMonth).getDate();
 
-  return monthTransactions;
-}
-
-function calculateInterest(accountId: string, transactions: Transaction[], yearMonth: string, openingBalance: number): number {
-  const [yearStr, monthStr] = [yearMonth.slice(0, 4), yearMonth.slice(4)];
-  const year = parseInt(yearStr);
-  const month = parseInt(monthStr);
-  const firstDay = new Date(year, month - 1, 1);
-  const lastDay = getLastDayOfMonth(year, month);
-
-  const accountTxns = addStartEndMonthTransactions(accountId, [...deduplicateTransactionsByDate(transactions)], firstDay, lastDay, openingBalance);
-
-  const txnInterestPeriods: { startDate: Date; endDate: Date; balanceAmt: number; rate: number }[] = [];
-  let startTransactionDate = firstDay;
   let balanceAmt = openingBalance;
+  let interestRule = null;
+  let totalInterest = 0;
 
-  for (const txn of accountTxns) {
-    const txnDate = parseDate(txn.date);
-    if (firstDay.getTime() === txnDate.getTime()) {
-      balanceAmt = txn.balance || 0;
-      continue;
+  for (let i = 1; i <= lastDay; i++) {
+    const currentDate = `${yearMonth}${String(i).padStart(2, '0')}`;
+    balanceAmt = getEndOfTheDayBalance(transactions, currentDate, balanceAmt);
+    interestRule = getInterestRuleOfDate(interestRules, currentDate);
+
+    if(interestRule && balanceAmt > 0) {
+      totalInterest += (balanceAmt * interestRule.rate)/100;
     }
-
-    let rulesBefore = getRuleForDate(interestRules, startTransactionDate);
-    let interestRulesBetween = getInterestRulesBetween(interestRules, startTransactionDate, parseDate(txn.date));
-
-    if (interestRulesBetween.length > 0) {
-      for (const _interestRule of interestRulesBetween) {
-        const previousDate = new Date(parseDate(_interestRule.date));
-        previousDate.setDate(previousDate.getDate() - 1);
-
-        txnInterestPeriods.push({
-          startDate: startTransactionDate,
-          endDate: previousDate,
-          balanceAmt: (previousDate < parseDate(txn.date) ? balanceAmt : txn.balance) || 0,
-          rate: (previousDate < parseDate(_interestRule.date) ? rulesBefore?.rate : _interestRule.rate) || 0
-        });
-        startTransactionDate = parseDate(_interestRule.date);
-        rulesBefore = _interestRule;
-      }
-    }
-
-    const endDate = new Date(parseDate(txn.date));
-    if(endDate < lastDay) {
-      endDate.setDate(endDate.getDate() - 1);
-    }
-    txnInterestPeriods.push({
-      startDate: startTransactionDate,
-      endDate: endDate,
-      balanceAmt: balanceAmt || 0,
-      rate: rulesBefore?.rate || 0
-    });
-    startTransactionDate = parseDate(txn.date);
-    balanceAmt = txn.balance || 0;
   }
 
-  const totalInterest = txnInterestPeriods.reduce((sum, p) => {
-    const days = daysBetween(p.startDate, p.endDate);
-    const interest = (p.balanceAmt * p.rate * days) / (100);
-    return sum + interest;
-  }, 0);
-
-  return totalInterest/365;
+  return totalInterest > 0 ? (totalInterest / 365) : totalInterest;
 }
 
-function deduplicateTransactionsByDate(transactions: Transaction[]): Transaction[] {
-  const map = new Map<string, Transaction>();
-
-  for (const txn of transactions) {
-    map.set(txn.date, txn);
-  }
-
-  return Array.from(map.values()).sort((a, b) => a.date.localeCompare(b.date));
+function getEndOfTheDayBalance(transactions: Transaction[], date: string, previousDayBalance: number) {
+  const txns = transactions.filter(txn => txn.date === date);
+  return txns.length > 0 ? 
+    previousDayBalance + txns.reduce((balance, txn) => balance + (txn.type === 'D' || txn.type === 'I' ? txn.amount : -txn.amount), 0) : 
+    previousDayBalance;
 }
 
-function getRuleForDate(rules: InterestRule[], date: Date): InterestRule | undefined {
-  let applicable: InterestRule | undefined;
-  for (const rule of rules) {
-    const ruleDate = parseDate(rule.date);
-    if (ruleDate <= date) applicable = rule;
-    else break;
-  }
-  return applicable;
-}
-
-function getInterestRulesBetween(rules: InterestRule[], startDate: Date, endDate: Date): InterestRule[] {
-  const sorted = rules
-    .filter(r => parseDate(r.date) > startDate && parseDate(r.date) < endDate)
-    .sort((a, b) => a.date.localeCompare(b.date));
-  return sorted;
+function getInterestRuleOfDate(rules: InterestRule[], date: string): InterestRule | null {
+    const sorted = rules
+    .filter(r => parseDate(r.date) <= parseDate(date))
+    .sort((a, b) => b.date.localeCompare(a.date));
+  return sorted.length > 0 ? sorted[0] : null;
 }
 
 export function displayAccountStatement(accountId: string) {
@@ -146,23 +74,9 @@ export function displayAccountStatement(accountId: string) {
   }
 };
 
-function calculateOpeningBalance(transactions: Transaction[], yearMonth: string): number {
-  const year = parseInt(yearMonth.slice(0, 4), 10);
-  const month = parseInt(yearMonth.slice(4), 10);
-  const monthStart = new Date(year, month - 1, 1);
-  let balance = 0;
-
-  for (const txn of transactions) {
-    const year = parseInt(txn.date.substring(0, 4), 10);
-    const month = parseInt(txn.date.substring(4, 6), 10) - 1;
-    const day = parseInt(txn.date.substring(6, 8), 10);
-    const txnDate = new Date(year, month, day);
-    if (txnDate < monthStart) {
-      if (txn.type === 'D') balance += txn.amount;
-      else if (txn.type === 'W') balance -= txn.amount;
-      else if (txn.type === 'I') balance += txn.amount;
-    }
-  }
+function calculateOpeningBalance(transactions: Transaction[], date: string) {
+  const txns = transactions.filter(txn => parseDate(txn.date) < parseDate(date));
+  let balance = txns.reduce((balance, txn) => balance + (txn.type === 'D' || txn.type === 'I' ? txn.amount : -txn.amount), 0);
 
   return parseFloat(balance.toFixed(2));
 }

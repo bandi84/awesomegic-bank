@@ -1,4 +1,4 @@
-# AwesomeGIC Bank Console App
+# AwesomeGIC Bank Console App 
 
 This is a TypeScript console application simulating basic banking operations:
 
