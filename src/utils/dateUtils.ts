@@ -5,13 +5,11 @@ export function parseDate(dateStr: string): Date {
   return new Date(year, month, day);
 }
 
-export function getLastDayOfMonth(year: number, month: number): Date {
+export function getLastDayOfMonth(yearMonth: string): Date {
+  const [yearStr, monthStr] = [yearMonth.slice(0, 4), yearMonth.slice(4)];
+  const year = parseInt(yearStr);
+  const month = parseInt(monthStr);
   return new Date(year, month, 0);
-}
-
-export function daysBetween(start: Date, end: Date): number {
-  const msPerDay = 24 * 60 * 60 * 1000;
-  return Math.floor((end.getTime() - start.getTime()) / msPerDay) + 1;
 }
 
 export function formatDate(date: Date) {
