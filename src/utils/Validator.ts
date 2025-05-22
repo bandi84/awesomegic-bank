@@ -33,7 +33,7 @@ export function validateTransactionRules(input: string) {
   if (!isValidDate(date)) validationErrors.push(`${MESSAGES.INVALID_INPUT_TRANSACTION.DATE}`)
   if (!acc.trim()) validationErrors.push(`${MESSAGES.INVALID_INPUT_TRANSACTION.ACCOUNT}`)
   if (upperType !== 'D' && upperType !== 'W') validationErrors.push(`${MESSAGES.INVALID_INPUT_TRANSACTION.TYPE}`)
-  if (!isValidAmount(amountStr)) validationErrors.push(`${MESSAGES.INVALID_INPUT_TRANSACTION.ACCOUNT}`)
+  if (!isValidAmount(amountStr)) validationErrors.push(`${MESSAGES.INVALID_INPUT_TRANSACTION.AMOUNT}`)
   
   return validationErrors;
 }

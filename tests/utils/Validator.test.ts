@@ -6,6 +6,7 @@ jest.mock("../../src/constants/messages", () => ({
       DATE: "Invalid date",
       ACCOUNT: "Invalid account",
       TYPE: "Invalid type",
+      AMOUNT: "Invalid amount",
     },
     INVALID_RULE: {
       DATE: "Invalid rule date",
@@ -74,7 +75,7 @@ describe("validateTransactionRules", () => {
   it("should return an error for invalid amount", () => {
     const input = "20240522 ACC1 D abc";
     expect(Validator.validateTransactionRules(input)).toContain(
-      "Invalid account"
+      "Invalid amount"
     );
   });
 });
