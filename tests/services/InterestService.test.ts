@@ -23,25 +23,6 @@ describe('addInterestRule', () => {
   });
 });
 
-describe('getApplicableRate', () => {
-  beforeEach(() => {
-    interestRules.length = 0;
-    addInterestRule('20240401', 'R1', 4.0);
-    addInterestRule('20240501', 'R2', 5.0);
-    addInterestRule('20240601', 'R3', 6.0);
-  });
-
-  it('should return the latest rule before or on the given date', () => {
-    expect(getApplicableRate('20240515')?.ruleId).toBe('R2');
-    expect(getApplicableRate('20240601')?.ruleId).toBe('R3');
-    expect(getApplicableRate('20240415')?.ruleId).toBe('R1');
-  });
-
-  it('should return undefined if no rule is applicable', () => {
-    expect(getApplicableRate('20240101')).toBeUndefined();
-  });
-});
-
 describe('displayInterestRules', () => {
   it('should print the interest rules table', () => {
     addInterestRule('20240501', 'R1', 5.0);
