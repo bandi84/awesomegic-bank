@@ -13,7 +13,7 @@ export function printStatement(accountId: string, ym: string): void {
 
   let balance = openingBalance;
 
-  console.log(`Account: ${accountId}`);
+  console.log(`\nAccount: ${accountId}`);
   console.log(`| Date     | Txn Id      | Type | Amount | Balance |`);
   for (const txn of txns) {
     balance += txn.type === 'D' || txn.type === 'I' ? txn.amount : -txn.amount;
@@ -22,23 +22,26 @@ export function printStatement(accountId: string, ym: string): void {
 
   const lastDay = `${ym}${getLastDayOfMonth(ym).getDate()}`;
   const interest = calculateInterest(txns, ym, openingBalance);
-  if (interest > 0) {
-    balance += interest;
-    console.log(`| ${lastDay} |             | I    | ${interest.toFixed(2).padStart(6)} | ${balance.toFixed(2).padStart(7)} |`);
-  }
+  
+  balance += interest;
+  console.log(`| ${lastDay} |             | I    | ${interest.toFixed(2).padStart(6)} | ${balance.toFixed(2).padStart(7)} |`);
 }
 
 function calculateInterest(transactions: Transaction[], yearMonth: string, openingBalance: number): number {
+  if(openingBalance === 0 && transactions.length === 0) {
+    return 0;
+  }
+
   const lastDay = getLastDayOfMonth(yearMonth).getDate();
 
   let balanceAmt = openingBalance;
-  let interestRule = null;
+  let interestRule = getPreviousInterestRuleOfDate(interestRules, `${yearMonth}01`);
   let totalInterest = 0;
 
   for (let i = 1; i <= lastDay; i++) {
     const currentDate = `${yearMonth}${String(i).padStart(2, '0')}`;
     balanceAmt = getEndOfTheDayBalance(transactions, currentDate, balanceAmt);
-    interestRule = getInterestRuleOfDate(interestRules, currentDate);
+    interestRule = getInterestRuleOfDate(interestRules, currentDate) || interestRule;
 
     if(interestRule && balanceAmt > 0) {
       totalInterest += (balanceAmt * interestRule.rate)/100;
@@ -55,12 +58,16 @@ function getEndOfTheDayBalance(transactions: Transaction[], date: string, previo
     previousDayBalance;
 }
 
-function getInterestRuleOfDate(rules: InterestRule[], date: string): InterestRule | null {
+function getPreviousInterestRuleOfDate(rules: InterestRule[], date: string): InterestRule | undefined {
     const sorted = rules
     .filter(r => parseDate(r.date) <= parseDate(date))
     .sort((a, b) => b.date.localeCompare(a.date));
-  return sorted.length > 0 ? sorted[0] : null;
+  return sorted.length > 0 ? sorted[0] : undefined;
 }
+
+function getInterestRuleOfDate(rules: InterestRule[], date: string): InterestRule | undefined {
+    return rules.find(r => r.date === date);
+}    
 
 export function displayAccountStatement(accountId: string) {
   console.log(`\nAccount: ${accountId}`);

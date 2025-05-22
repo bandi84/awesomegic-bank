@@ -1,4 +1,6 @@
-export function isValidYYYYMMDD(dateStr: string) {
+import { MESSAGES } from "../constants/messages";
+
+export function isValidDate(dateStr: string) {
   if (!/^\d{8}$/.test(dateStr)) return false;
 
   const year = +dateStr.slice(0, 4);
@@ -20,5 +22,30 @@ function isValidDateParts(year: number, month: number, day: number) {
 }
 
 export function isValidAmount(amount: string): boolean {
-  return /^\d+(\.\d{1,2})?$/.test(amount) && parseFloat(amount) > 0 && parseFloat(amount) < 100;
+  return /^\d+(\.\d{1,2})?$/.test(amount) && parseFloat(amount) > 0;
+}
+
+export function validateTransactionRules(input: string) {
+  const [date, acc, type, amountStr] = input.split(' ');
+  const upperType = type.toUpperCase();
+  let validationErrors: string[] = [];
+
+  if (!isValidDate(date)) validationErrors.push(`${MESSAGES.INVALID_INPUT_TRANSACTION.DATE}`)
+  if (!acc.trim()) validationErrors.push(`${MESSAGES.INVALID_INPUT_TRANSACTION.ACCOUNT}`)
+  if (upperType !== 'D' && upperType !== 'W') validationErrors.push(`${MESSAGES.INVALID_INPUT_TRANSACTION.TYPE}`)
+  if (!isValidAmount(amountStr)) validationErrors.push(`${MESSAGES.INVALID_INPUT_TRANSACTION.ACCOUNT}`)
+  
+  return validationErrors;
+}
+
+export function validateInterestRules(input: string) {
+  const [date, ruleId, rateStr] = input.split(' ');
+  const rate = parseFloat(rateStr);
+  let validationErrors: string[] = [];
+
+  if (!isValidDate(date)) validationErrors.push(`${MESSAGES.INVALID_RULE.DATE}`)
+  if (!ruleId.trim()) validationErrors.push(`${MESSAGES.INVALID_RULE.RULE_ID}`)
+  if (isNaN(rate) || rate <= 0 || rate >= 100) validationErrors.push(`${MESSAGES.INVALID_RULE.RATE}`)
+  
+  return validationErrors;
 }

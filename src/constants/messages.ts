@@ -21,9 +21,18 @@ export const MESSAGES = {
   [Q] Quit
   >`,
 
-  INVALID_INPUT: `Invalid input. Please try again.`,
+  INVALID_INPUT_TRANSACTION: {
+      DATE: `Invalid Transaction Date. Please retry in correct format.`,
+      ACCOUNT: `Invalid Account. Please retry in correct format.`,
+      AMOUNT: `Invalid Transaction Amount. Please retry in correct format.`,
+      TYPE: `Invalid Transaction Type. Please retry in correct format.`,
+  },
 
-  INVALID_RULE: `Invalid rule. Please try again.`,
+  INVALID_RULE: {
+    DATE: `Invalid RULE Date. Please retry in correct format.`,
+    RULE_ID: `Invalid RULE ID. Please retry in correct format.`,
+    RATE: `Invalid RULE Rate. Please retry in correct format`,
+  },
 
   TRANSACTION_FAILED: `Transaction failed. Please try again.`,
 
