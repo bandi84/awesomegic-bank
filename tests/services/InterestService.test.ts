@@ -1,4 +1,4 @@
-import { addInterestRule, getApplicableRate, displayInterestRules } from '../../src/services/InterestService';
+import { addInterestRule, displayInterestRules } from '../../src/services/InterestService';
 import { interestRules } from '../../src/data/BankData';
 
 beforeEach(() => {
