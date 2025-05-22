@@ -8,12 +8,6 @@ export function addInterestRule(date: string, ruleId: string, rate: number): voi
   interestRules.push(...filtered.sort((a, b) => a.date.localeCompare(b.date)));
 }
 
-export function getApplicableRate(date: string): InterestRule | undefined {
-  return [...interestRules]
-    .filter(rule => rule.date <= date)
-    .sort((a, b) => b.date.localeCompare(a.date))[0];
-}
-
 export function displayInterestRules() {
   console.log(`Interest rules:`);
   console.log('| Date     | Rule Id | Rate (%) |');
