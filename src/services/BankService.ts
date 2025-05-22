@@ -9,15 +9,21 @@ export function addTransaction(date: string, accountId: string, type: string, am
   let account = accounts.get(accountId);
 
   if (!account) {
-    if (upperType === 'W') return null;
+    if (upperType === 'W') {
+      console.log(`Insufficient funds`);
+      return null;
+    }
     account = { id: accountId, transactions: [] };
     accounts.set(accountId, account);
   }
-
+  
   const balance = account.transactions.reduce((acc, txn) =>
     txn.type === 'D' || txn.type === 'I' ? acc + txn.amount : acc - txn.amount, 0);
-
-  if (upperType === 'W' && balance < amount) return null;
+  
+  if (upperType === 'W' && balance < amount) {
+    console.log(`Insufficient funds`);
+    return null;
+  }
 
   const count = (txnCounters.get(date) || 0) + 1;
   txnCounters.set(date, count);
