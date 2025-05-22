@@ -3,21 +3,20 @@ import { addInterestRule, displayInterestRules } from './services/InterestServic
 import { printStatement, displayAccountStatement } from './services/StatementService';
 import { validateInterestRules, validateTransactionRules } from './utils/Validator';
 import { MESSAGES } from './constants/messages';
-import { askQuestion, close } from './main.helper';
+import { askQuestion } from './main.helper';
 
-
-async function prompt(question: string = MESSAGES.WELCOME): Promise<void> {
-  let input = await askQuestion(`\n${question} `);
+export async function prompt(question: string = MESSAGES.WELCOME): Promise<void> {
+  let input = await askQuestion(`\n${question} `) || '';
   switch (input.trim().toUpperCase()) {
     case 'T': return inputTransactions();
     case 'I': return defineInterestRules();
     case 'P': return printAccountStatement();
-    case 'Q': close(); console.log(`${MESSAGES.GOODBYE}`); break;
+    case 'Q': console.log(`${MESSAGES.GOODBYE}`); break;
     default: prompt(); break;
   }
 }
 
-async function inputTransactions():Promise<void> {
+export async function inputTransactions():Promise<void> {
   let input = await askQuestion(`\n${MESSAGES.INPUT_TRANSACTION_PROMPT}`);
 
   if (!input.trim()) return prompt();
@@ -38,7 +37,7 @@ async function inputTransactions():Promise<void> {
   prompt(`${MESSAGES.MENU_PROMPT}`);
 }
 
-async function defineInterestRules() {
+export async function defineInterestRules() {
   let input = await askQuestion(`\n${MESSAGES.INTEREST_RULE_PROMPT}`);
 
   if (!input.trim()) return prompt();
@@ -57,7 +56,7 @@ async function defineInterestRules() {
   prompt(`${MESSAGES.MENU_PROMPT}`);
 }
 
-async function printAccountStatement() {
+export async function printAccountStatement() {
   let input = await askQuestion(`\n${MESSAGES.STATEMENT_PROMPT}`);
 
   if (!input.trim()) return prompt();
