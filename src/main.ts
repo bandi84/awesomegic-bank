@@ -3,7 +3,7 @@ import { addInterestRule, displayInterestRules } from './services/InterestServic
 import { printStatement, displayAccountStatement } from './services/StatementService';
 import { validateInterestRules, validateTransactionRules } from './utils/Validator';
 import { MESSAGES } from './constants/messages';
-import { askQuestion } from './main.helper';
+import { askQuestion, closeRead } from './main.helper';
 
 export async function prompt(question: string = MESSAGES.WELCOME): Promise<void> {
   let input = await askQuestion(`\n${question} `) || '';
@@ -11,7 +11,7 @@ export async function prompt(question: string = MESSAGES.WELCOME): Promise<void>
     case 'T': return inputTransactions();
     case 'I': return defineInterestRules();
     case 'P': return printAccountStatement();
-    case 'Q': console.log(`${MESSAGES.GOODBYE}`); break;
+    case 'Q': closeRead(); console.log(`${MESSAGES.GOODBYE}`); break;
     default: prompt(); break;
   }
 }

@@ -1,3 +1,4 @@
+import { MESSAGES } from "../src/constants/messages";
 import { askQuestion } from "../src/main.helper";
 import readline from "readline";
 
@@ -26,30 +27,24 @@ describe("askQuestion", () => {
     closeMock.mockReset();
   });
 
-  it("resolves with the user's answer", async () => {
-    questionMock.mockImplementation((query: string, cb: (answer: string) => void) => cb("test answer"));
-    const answer = await askQuestion("What is your name?");
-    expect(answer).toBe("test answer");
+  it("should resolve with the user's answer", async () => {
+    questionMock.mockImplementation((query: string, cb: (answer: string) => void) => cb("t"));
+    const answer = await askQuestion(MESSAGES.WELCOME);
+    expect(answer).toBe("t");
   });
 
-  it("calls readline.createInterface with correct arguments", async () => {
+  it("should call readline.createInterface with correct arguments", async () => {
     questionMock.mockImplementation((query: string, cb: (answer: string) => void) => cb("answer"));
-    await askQuestion("Question?");
+    await askQuestion(MESSAGES.INPUT_TRANSACTION_PROMPT);
     expect(readline.createInterface).toHaveBeenCalledWith({
       input: process.stdin,
       output: process.stdout,
     });
   });
 
-  it("calls rl.question with the provided query", async () => {
+  it("should call rl.question with the provided query", async () => {
     questionMock.mockImplementation((query: string, cb: (answer: string) => void) => cb("answer"));
-    await askQuestion("Favorite color?");
-    expect(questionMock).toHaveBeenCalledWith("Favorite color?", expect.any(Function));
-  });
-
-  it("calls rl.close after answering", async () => {
-    questionMock.mockImplementation((query: string, cb: (answer: string) => void) => cb("answer"));
-    await askQuestion("Close test?");
-    expect(closeMock).toHaveBeenCalled();
+    await askQuestion(MESSAGES.INTEREST_RULE_PROMPT);
+    expect(questionMock).toHaveBeenCalledWith(MESSAGES.INTEREST_RULE_PROMPT, expect.any(Function));
   });
 });
