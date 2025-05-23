@@ -45,6 +45,60 @@ describe('addTransaction', () => {
     consoleSpy.mockRestore();
   });
 
+  it('should not allow withdrawal if funds are insufficient1', () => {
+    addTransaction('20250523', 'A4', 'D', 100);
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const txn = addTransaction('20250522', 'A4', 'W', 100);
+    expect(txn).toBeNull();
+    expect(consoleSpy).toHaveBeenCalledWith('Insufficient funds');
+    consoleSpy.mockRestore();
+  });
+
+  it('should not allow withdrawal if withdrawal amount is exceeding the daily withdrawal limit', () => {
+    addTransaction('20240522', 'A4', 'D', 1200);
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const withdrawalTxn1 = addTransaction('20240522', 'A4', 'W', 100);
+    const withdrawalTxn2 = addTransaction('20240522', 'A4', 'W', 800);
+    const withdrawalTxn3 = addTransaction('20240522', 'A4', 'W', 200);
+
+    expect(withdrawalTxn1).not.toBeNull();
+    expect(withdrawalTxn2).not.toBeNull();
+    expect(withdrawalTxn3).toBeNull();
+
+    expect(consoleSpy).toHaveBeenCalledWith('Exceeding daily withdarwal amount by: 100');
+    consoleSpy.mockRestore();
+  });
+
+  it('should allow withdrawal if withdrawal amount is exceeding the daily withdrawal limit', () => {
+    addTransaction('20240522', 'A4', 'D', 1200);
+    addTransaction('20240522', 'A5', 'D', 1200);
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const withdrawalTxn1 = addTransaction('20240522', 'A4', 'W', 100);
+    const withdrawalTxn2 = addTransaction('20240522', 'A5', 'W', 800);
+    const withdrawalTxn3 = addTransaction('20240522', 'A4', 'W', 200);
+
+    
+    expect(withdrawalTxn1).not.toBeNull();
+    expect(withdrawalTxn2).not.toBeNull();
+    expect(withdrawalTxn3).not.toBeNull();
+
+    consoleSpy.mockRestore();
+  });
+
+  it('should allow withdrawal if withdrawal amount is less than the daily withdrawal limit', () => {
+    addTransaction('20240522', 'A4', 'D', 1200);
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    const withdrawalTxn1 = addTransaction('20240522', 'A4', 'W', 100);
+    const withdrawalTxn2 = addTransaction('20240522', 'A4', 'W', 800);
+    const withdrawalTxn3 = addTransaction('20240522', 'A4', 'W', 100);
+
+    expect(withdrawalTxn1).not.toBeNull();
+    expect(withdrawalTxn2).not.toBeNull();
+    expect(withdrawalTxn3).not.toBeNull();
+
+    consoleSpy.mockRestore();
+  });
+
   it('should increment transaction count for the same date', () => {
     addTransaction('20230626', 'A5', 'D', 10);
     const txn2 = addTransaction('20230626', 'A5', 'D', 20);
