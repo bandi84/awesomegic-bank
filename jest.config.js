@@ -1,6 +1,6 @@
 module.exports = {
   testEnvironment: 'node',
-  collectCoverage: true,
+  collectCoverage: false,
   moduleFileExtensions: ['js', 'ts'],
   testMatch: ['**/tests/**/*.test.(js|ts)'],
   transform: {
