@@ -1,5 +1,4 @@
 import { interestRules } from '../data/BankData';
-import { InterestRule } from '../models/InterestRule';
 
 export function addInterestRule(date: string, ruleId: string, rate: number): void {
   const filtered = interestRules.filter(rule => rule.date !== date);
